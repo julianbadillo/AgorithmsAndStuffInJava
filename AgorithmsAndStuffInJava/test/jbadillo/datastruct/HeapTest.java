@@ -1,6 +1,9 @@
+package jbadillo.datastruct;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+
+import jbadillo.datastruct.Heap;
 
 public class HeapTest {
 

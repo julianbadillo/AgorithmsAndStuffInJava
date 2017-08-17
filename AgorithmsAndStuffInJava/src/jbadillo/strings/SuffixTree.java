@@ -1,3 +1,4 @@
+package jbadillo.strings;
 /**
  * Implementation of a suffix Tree as described by
  * Ukkonen's algorithm. O(n) space and time.

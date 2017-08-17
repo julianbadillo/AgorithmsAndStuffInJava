@@ -1,3 +1,4 @@
+package jbadillo.datastruct;
 import java.util.ArrayList;
 
 /**

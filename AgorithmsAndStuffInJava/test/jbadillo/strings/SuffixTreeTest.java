@@ -1,6 +1,9 @@
+package jbadillo.strings;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+
+import jbadillo.strings.SuffixTree;
 
 public class SuffixTreeTest {
 
