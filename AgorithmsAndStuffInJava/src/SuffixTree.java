@@ -30,15 +30,29 @@ public class SuffixTree {
 		setIndex(root, 0);
 	}
 	
-	
+	/**
+	 * @param suffix
+	 * @return the starting index of the suffix, or -1 if not found
+	 */
 	public int searchSuffix(String suffix){
 		return searchSuffix(root, (suffix+END).toCharArray(), 0);
 	}
 	
+	/**
+	 * @param suffix
+	 * @return true if is suffix
+	 */
 	public boolean isSuffix(String suffix) {
 		return -1 != searchSuffix(root, (suffix+END).toCharArray(), 0);
 	}
 
+	/**
+	 * Recursive call
+	 * @param node
+	 * @param suffix
+	 * @param index
+	 * @return
+	 */
 	private int searchSuffix(Node node, char[] suffix, int index){
 		// base case, reached end
 		if(index == suffix.length){
@@ -63,7 +77,8 @@ public class SuffixTree {
 		return searchSuffix(next, suffix, index + next.length());
 	}
 	
-	Node lastNewNode;
+	private Node lastNewNode;
+	
 	private void buildTree(){
 		// set active points
 		lastNewNode = null;
@@ -147,18 +162,6 @@ public class SuffixTree {
 		}
 	}
 	
-	private void setIndex(Node node, int h){
-		
-		if(!node.leaf){
-			for(Node child: node.children)
-				if(child != null)
-					setIndex(child, node.length() + h);
-		}
-		else{
-			node.index = str.length - node.length() - h;
-		}
-	}
-	
 	private boolean walkDown(Node node) {
 		// skip / count trick
 		if(al >= node.length()){
@@ -171,6 +174,27 @@ public class SuffixTree {
 		return false;
 	}
 	
+	/**
+	 * Calculates the starting index (height)
+	 * of the suffix at each leaf.
+	 * @param node
+	 * @param h
+	 */
+	private void setIndex(Node node, int h){
+		
+		if(!node.leaf){
+			for(Node child: node.children)
+				if(child != null)
+					setIndex(child, node.length() + h);
+		}
+		else{
+			node.index = str.length - node.length() - h;
+		}
+	}
+	
+	/***
+	 * @return number of nodes
+	 */
 	public int size(){
 		return size(root);
 	}
@@ -194,7 +218,12 @@ public class SuffixTree {
 		return bf.toString();
 	}
 	
-	// recursive traverse DFS
+	/**
+	 * recursive traverse DFS
+	 * @param n
+	 * @param d
+	 * @param bf
+	 */
 	private void toString(Node n, int d, StringBuilder bf){
 		if(n.leaf)
 			return;
@@ -210,13 +239,17 @@ public class SuffixTree {
 		}
 	}
 	
-	
-	class Node {
-
-		Node[] children;
-		Node suffix;
-		boolean leaf;
-		int start, end, index;
+	/**
+	 * A node-edge simplification of the suffix tree node.
+	 * If a node is a leaf, the end is the current end of
+	 * the entire suffix tree.
+	 * @author jbadillo
+	 */
+	private class Node {
+		private Node[] children;
+		private Node suffix;
+		private boolean leaf;
+		private int start, end, index;
 		
 		/***
 		 * An inner node (possibly root)
@@ -244,10 +277,18 @@ public class SuffixTree {
 			leaf = true;
 		}
 
+		/**
+		 * @return number of characters on edge
+		 */
 		public int length(){
 			return (leaf?SuffixTree.this.end:this.end) - start;
 		}
 		
+		/**
+		 * 
+		 * @param i
+		 * @return
+		 */
 		public char charAt(int i){
 			return SuffixTree.this.str[this.start + i];
 		}

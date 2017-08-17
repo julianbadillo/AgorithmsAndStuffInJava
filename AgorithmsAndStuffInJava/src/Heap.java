@@ -1,9 +1,22 @@
 import java.util.ArrayList;
 
+/**
+ * Simple implementation of a heap/priority queue using an array tree.
+ * Keeps the minimum value at the head.
+ * - Get Min = O(1)
+ * - Insert = O(log n)
+ * - Remove min = O(log n)
+ * @author jbadillo
+ *
+ */
 public class Heap {
 
 	private ArrayList<Integer> heap = new ArrayList<>();
-	// always the minimum on front
+	
+	/**
+	 * Adds a new value, keeping the minimum at the head
+	 * @param x
+	 */
 	void push(int x){
 		// add at the end
 		heap.add(x);
@@ -21,12 +34,18 @@ public class Heap {
 		}
 
 	}
-	// the min
+	
+	/**
+	 * @return the min value, doesn't modify the heap
+	 */
 	int peekMin(){
 		return heap.get(0);
 	}
 	
-	// pops the min
+	/**
+	 * 
+	 * @return the min value, and removes it from the heap.
+	 */
 	int pop(){
 		if(heap.size() == 1)
 			return heap.remove(0);
