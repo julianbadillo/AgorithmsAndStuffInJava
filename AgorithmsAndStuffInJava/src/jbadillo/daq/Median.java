@@ -24,6 +24,7 @@ public class Median {
         //int [] arr = {3,10,7,6,12};
         //int k = 2;
         System.out.println(kselect(arr, k-1));
+        in.close();
 	}
 	
 	/**
@@ -69,7 +70,7 @@ public class Median {
         arr[p] = arr[start];
         arr[start] = t;
         p = start;
-        int t2;
+        
         //pivoting around    
         for(int i=start+1; i<end; i++){
             //if we have to pivot
