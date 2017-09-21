@@ -1,4 +1,9 @@
 package jbadillo.strings;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.stream.Collectors;
+
 /**
  * Implementation of a suffix Tree as described by
  * Ukkonen's algorithm. O(n) space and time.
@@ -19,6 +24,7 @@ public class SuffixTree {
 	private int al; // active length
 	private int rsc; // remaining suffix count (implicit)
 	
+
 	/**
 	 * 
 	 * @param word
@@ -296,12 +302,85 @@ public class SuffixTree {
 		
 		@Override
 		public String toString() {
-			// if leaf
+			
+			return plain() + " ["+start+", "+end+")"+
+						(leaf?(" = "+index): "");
+		}
+		
+		public String plain(){
 			if(leaf)
 				end = SuffixTree.this.end;
-			return new String(SuffixTree.this.str, start, end - start) + " ["+start+", "+end+")"+
-						(leaf?(" = "+index): "");
+			return new String(SuffixTree.this.str, start, end - start);
 		}
 	}
 
+	public static final char SEPARATOR = '|';
+	
+	public static String longestCommonSubsequence(String s1, String s2){
+		// build a separator
+		String full = s1 + SEPARATOR + s2;
+		SuffixTree tree = new SuffixTree(full);
+		
+		// TODO find the longest branch that ends with SEPARATOR and END
+		LinkedList<Node> path = new LinkedList<>();
+		int r = lcsR(tree.root, s1.length(), full.length()-1, path);
+		
+		// join the nodes content
+		return path.stream()
+				// non root
+				.filter(n -> n!=tree.root)
+				.map(Node::plain)
+				.collect(Collectors.joining());
+		
+	}
+	
+	
+	
+	public static int lcsR(Node node, int sep1, int sep2, Collection<Node> path){
+		// base case
+		if(node.leaf)
+			return 0; 
+		
+		// check the children
+		int max = 0;
+		
+		Collection<Node> maxList = null;
+		boolean end1 = false, end2 = false;
+		for(Node child: node.children){
+			if(child == null)
+				continue;
+			// has the middle separator
+			if(child.start <= sep1 && sep1 < child.start + child.length())
+				end1 = true;
+			// has the end separator
+			else if(child.leaf)
+				end2 = true;
+			if(!child.leaf){
+				// recursive call
+				Collection<Node> childPath = new LinkedList<>();
+				int r = lcsR(child, sep1, sep2, childPath);
+				if(max < r){
+					max = r;
+					maxList = childPath;
+				}
+			}
+		}
+		// if any recursive was successful
+		if(max > 0){
+			// append found
+			path.add(node);
+			path.addAll(maxList);
+			return node.length() + max;
+		}
+		
+		// if has both ends as children
+		if(end1 && end2){
+			path.add(node);
+			return node.length();
+		}
+		
+		// else not found
+		return 0;
+	}
+	
 }

@@ -1,9 +1,9 @@
 package jbadillo.strings;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
-
-import jbadillo.strings.SuffixTree;
 
 public class SuffixTreeTest {
 
@@ -143,5 +143,54 @@ public class SuffixTreeTest {
 		//012
 		SuffixTree st = new SuffixTree(word);
 		assertEquals(17, st.size());		
+	}
+	
+	@Test
+	public void testLongestCommonSubsequence() {
+		String s1 = "abcd";
+		String s2 = "abcd";
+		assertEquals("abcd", SuffixTree.longestCommonSubsequence(s1, s2));
+		
+		s1 = "abc";
+		s2 = "abcd";
+		assertEquals("abc", SuffixTree.longestCommonSubsequence(s1, s2));
+		
+		s1 = "abcabd";
+		s2 = "dcabcd";
+		assertEquals("abc", SuffixTree.longestCommonSubsequence(s1, s2));
+		
+		s1 = "abcxa";
+		s2 = "axcba";
+		assertEquals("a", SuffixTree.longestCommonSubsequence(s1, s2));
+	}
+	
+	@Test
+	public void testLongestCommonSubsequenceMid() {
+		String s1 = "abcabxabcd";
+		String s2 = "abcabxabced";
+		assertEquals("abcabxabc", SuffixTree.longestCommonSubsequence(s1, s2));
+		
+		s1 = "abcabxabcd";
+		s2 = "ffabcabxabcdff";
+		assertEquals("abcabxabcd", SuffixTree.longestCommonSubsequence(s1, s2));
+		
+		s1 = "abcabxabcd";
+		s2 = "dcbaxbacba";
+		assertEquals("d", SuffixTree.longestCommonSubsequence(s1, s2));
+	}
+	
+	@Test
+	public void testLongestCommonSubsequenceBrutal() {
+		String s1 = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		String s2 = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		assertEquals("abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ", SuffixTree.longestCommonSubsequence(s1, s2));
+		
+		s1 = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		s2 = "ghijklmnopqrstuvwxyz1234567890ABCDEFGHI";
+		assertEquals("ghijklmnopqrstuvwxyz1234567890ABCDEFGHI", SuffixTree.longestCommonSubsequence(s1, s2));
+		
+		s1 = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		s2 = "zyxwvutsrqponmlkjihgfedcba0987654321ZYXWVUTSRQPONMLKJIHGFEDCBA";
+		assertEquals("0", SuffixTree.longestCommonSubsequence(s1, s2));
 	}
 }
