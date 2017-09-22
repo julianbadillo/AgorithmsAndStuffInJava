@@ -159,7 +159,7 @@ public class SuffixTreeTest {
 			if(rand.nextInt() % 100 == 0){
 				bf.append(pattern);	
 				indices.add(i);
-				i += pattern.length;
+				i += pattern.length - 1;
 			}
 			else{
 				// random string
