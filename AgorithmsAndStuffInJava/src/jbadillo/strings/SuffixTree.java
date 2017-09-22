@@ -1,7 +1,10 @@
 package jbadillo.strings;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +63,7 @@ public class SuffixTree {
 	 * @param index
 	 * @return
 	 */
+	// TODO make the iterative version
 	private int searchSuffix(Node node, char[] suffix, int index){
 		// base case, reached end
 		if(index == suffix.length){
@@ -82,6 +86,101 @@ public class SuffixTree {
 				return -1;
 		// recursive
 		return searchSuffix(next, suffix, index + next.length());
+	}
+	
+	/**
+	 * First occurrence of a given pattern
+	 * @param patt
+	 * @return
+	 */
+	public int indexOf(String patt){
+		// all occurrences
+		Collection<Integer> indices = indicesOf(root, patt.toCharArray(), 0);
+		// min
+		return indices == null? -1 : indices.stream()
+											.min(Integer::compareTo)
+											.get();
+	}
+	
+	/**
+	 * Last occurrence of a given pattern
+	 * @param patt
+	 * @return
+	 */
+	public int lastIndexOf(String patt){
+		// all occurrences
+		Collection<Integer> indices = indicesOf(root, patt.toCharArray(), 0);
+		// max
+		return indices == null? -1 : indices.stream()
+											.max(Integer::compareTo)
+											.get();
+	}
+	
+	/**
+	 * all occurrences of a given pattern
+	 * @param patt
+	 * @return
+	 */
+	public SortedSet<Integer> indicesOf(String patt){
+		// all occurrences
+		Collection<Integer> indices = indicesOf(root, patt.toCharArray(), 0);
+		return new TreeSet<>(indices);		
+	}
+	
+	/**
+	 * All occurences of a given pattern
+	 * @param node
+	 * @param patt
+	 * @param index
+	 * @return
+	 */
+	private Collection<Integer> indicesOf(Node node, char[] patt, int index){
+		// TODO iterative version
+		
+		// base case, reached end of pattern
+		if(index >= patt.length){
+			if(node.leaf)
+				return Collections.singletonList(node.index);
+			else
+				// go down to all leaves
+				return leafIndices(node);
+		}
+		
+		// end reached but still more to go
+		if(node.leaf)
+			return null;
+		
+		// no child with given char
+		if(node.children[patt[index]] == null)
+			return null;
+		
+		Node next = node.children[patt[index]];
+		// match edge characters until edge or patter are exhausted
+		for(int i=0; i < next.length() && index + i < patt.length; i++)
+			if(next.charAt(i) != patt[index + i])
+				return null;
+		// recursive
+		return indicesOf(next, patt, index + next.length());	
+	}
+	
+		
+	private Collection<Integer> leafIndices(Node node){
+		// TODO make iterative
+		Collection<Integer> list = new LinkedList<>();
+		if(node.leaf){
+			list.add(node.index);
+			return list;
+		}
+		
+		for(Node child: node.children)
+		{
+			if(child == null)
+				continue;
+			// recursive call
+			Collection<Integer> col = leafIndices(child);
+			list.addAll(col);
+		}
+		return list;
 	}
 	
 	private Node lastNewNode;
@@ -316,15 +415,20 @@ public class SuffixTree {
 
 	public static final char SEPARATOR = '|';
 	
-	public static String longestCommonSubsequence(String s1, String s2){
+	/**
+	 * Calculates the longest common substring between to strings
+	 * using the suffix tree
+	 * @param s1
+	 * @param s2
+	 * @return
+	 */
+	public static String longestCommonSubstring(String s1, String s2){
 		// build a separator
 		String full = s1 + SEPARATOR + s2;
 		SuffixTree tree = new SuffixTree(full);
 		
-		// TODO find the longest branch that ends with SEPARATOR and END
 		LinkedList<Node> path = new LinkedList<>();
-		int r = lcsR(tree.root, s1.length(), full.length()-1, path);
-		
+		int r = longestCommonSubstring(tree.root, s1.length(), full.length()-1, path);
 		// join the nodes content
 		return path.stream()
 				// non root
@@ -334,9 +438,16 @@ public class SuffixTree {
 		
 	}
 	
-	
-	
-	public static int lcsR(Node node, int sep1, int sep2, Collection<Node> path){
+	/**
+	 * 
+	 * @param node
+	 * @param sep1
+	 * @param sep2
+	 * @param path of nodes to reconstruct the substring
+	 * @return
+	 */
+	private static int longestCommonSubstring(Node node, int sep1, int sep2, Collection<Node> path){
+		// TODO make iterative
 		// base case
 		if(node.leaf)
 			return 0; 
@@ -346,6 +457,7 @@ public class SuffixTree {
 		
 		Collection<Node> maxList = null;
 		boolean end1 = false, end2 = false;
+		
 		for(Node child: node.children){
 			if(child == null)
 				continue;
@@ -358,7 +470,7 @@ public class SuffixTree {
 			if(!child.leaf){
 				// recursive call
 				Collection<Node> childPath = new LinkedList<>();
-				int r = lcsR(child, sep1, sep2, childPath);
+				int r = longestCommonSubstring(child, sep1, sep2, childPath);
 				if(max < r){
 					max = r;
 					maxList = childPath;
