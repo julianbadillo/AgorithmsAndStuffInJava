@@ -3,6 +3,7 @@ package jbadillo.strings;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.Queue;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -45,7 +46,8 @@ public class SuffixTree {
 	 * @return the starting index of the suffix, or -1 if not found
 	 */
 	public int searchSuffix(String suffix){
-		return searchSuffix(root, (suffix+END).toCharArray(), 0);
+		//return searchSuffix(root, (suffix+END).toCharArray(), 0);
+		return searchSuffix((suffix+END).toCharArray());
 	}
 	
 	/**
@@ -53,17 +55,46 @@ public class SuffixTree {
 	 * @return true if is suffix
 	 */
 	public boolean isSuffix(String suffix) {
-		return -1 != searchSuffix(root, (suffix+END).toCharArray(), 0);
+		//return -1 != searchSuffix(root, (suffix+END).toCharArray(), 0);
+		return -1 != searchSuffix((suffix+END).toCharArray());
 	}
 
+	
+	private int searchSuffix(char[] suffix){
+		int index = 0;
+		Node node = root;
+		// iterative traverse
+		while(index < suffix.length){
+			// if node is a leaf but end hasn't been reached
+			if(node.leaf)
+				return -1;
+			// check if node has a child for the given char
+			Node next = node.children[suffix[index]];
+			if(next == null)
+				return -1;
+			// match the edge
+			for (int i = 0; i < next.length() && index + i < suffix.length; i++) 
+				if(next.charAt(i) != suffix[index + i])
+					return -1;
+			index += next.length();
+			node = next;
+		}
+		
+		// reached end of suffix
+		if(index == suffix.length && node.leaf)
+			return node.index;
+		else
+			return -1;
+		
+	}
+	
 	/**
-	 * Recursive call
+	 * Recursive call - not used but useful for examples
 	 * @param node
 	 * @param suffix
 	 * @param index
 	 * @return
 	 */
-	// TODO make the iterative version
 	private int searchSuffix(Node node, char[] suffix, int index){
 		// base case, reached end
 		if(index == suffix.length){
@@ -95,7 +126,7 @@ public class SuffixTree {
 	 */
 	public int indexOf(String patt){
 		// all occurrences
-		Collection<Integer> indices = indicesOf(root, patt.toCharArray(), 0);
+		Collection<Integer> indices = indicesOf(patt.toCharArray());
 		// min
 		return indices == null? -1 : indices.stream()
 											.min(Integer::compareTo)
@@ -109,7 +140,7 @@ public class SuffixTree {
 	 */
 	public int lastIndexOf(String patt){
 		// all occurrences
-		Collection<Integer> indices = indicesOf(root, patt.toCharArray(), 0);
+		Collection<Integer> indices = indicesOf(patt.toCharArray());
 		// max
 		return indices == null? -1 : indices.stream()
 											.max(Integer::compareTo)
@@ -123,20 +154,52 @@ public class SuffixTree {
 	 */
 	public SortedSet<Integer> indicesOf(String patt){
 		// all occurrences
-		Collection<Integer> indices = indicesOf(root, patt.toCharArray(), 0);
+		Collection<Integer> indices = indicesOf(patt.toCharArray());
 		return new TreeSet<>(indices);		
 	}
 	
 	/**
-	 * All occurences of a given pattern
+	 * All occurrences of a given pattern
+	 * @param node
+	 * @param patt
+	 * @param index
+	 * @return
+	 */
+	private Collection<Integer> indicesOf(char[] patt){
+		Node node = root;
+		int index = 0;
+		// iterative version
+		while(index < patt.length){
+			if(node.leaf)
+				return null;
+			// check if node has a child for the given char
+			Node next = node.children[patt[index]];
+			if(next == null)
+				return null;
+			// match the edge
+			for (int i = 0; i < next.length() && index + i < patt.length; i++) 
+				if(next.charAt(i) != patt[index + i])
+					return null;
+			index += next.length();
+			node = next;	
+		}
+		
+		if(node.leaf)
+			return Collections.singletonList(node.index);
+		else
+			// go down to all leaves below
+			return leafIndices(node);
+		
+	}
+	
+	/**
+	 * Same but recursive - not used, only for reference
 	 * @param node
 	 * @param patt
 	 * @param index
 	 * @return
 	 */
 	private Collection<Integer> indicesOf(Node node, char[] patt, int index){
-		// TODO iterative version
-		
 		// base case, reached end of pattern
 		if(index >= patt.length){
 			if(node.leaf)
@@ -163,21 +226,50 @@ public class SuffixTree {
 		return indicesOf(next, patt, index + next.length());	
 	}
 	
-		
+	/**
+	 * Gets all indices of leaves under a node, including the
+	 * node
+	 * @param node
+	 * @return
+	 */
 	private Collection<Integer> leafIndices(Node node){
-		// TODO make iterative
+		Collection<Integer> indices = new LinkedList<>();
+		Queue<Node> queue = new LinkedList<>();
+		queue.add(node);
+		while(!queue.isEmpty()){
+			node = queue.poll();
+			// if leaf, add it to the result
+			if(node.leaf)
+				indices.add(node.index);
+			else
+				// add all children to queue
+				for(Node child: node.children)
+				{
+					if(child == null)
+						continue;
+					queue.add(child);
+				}
+		}
+		return indices;
+	}
+	
+	/***
+	 * Same but recursive - not used, only for reference
+	 * @param node
+	 * @return
+	 */
+	private Collection<Integer> leafIndicesR(Node node){
 		Collection<Integer> list = new LinkedList<>();
 		if(node.leaf){
 			list.add(node.index);
 			return list;
 		}
-		
 		for(Node child: node.children)
 		{
 			if(child == null)
 				continue;
 			// recursive call
-			Collection<Integer> col = leafIndices(child);
+			Collection<Integer> col = leafIndicesR(child);
 			list.addAll(col);
 		}
 		return list;
