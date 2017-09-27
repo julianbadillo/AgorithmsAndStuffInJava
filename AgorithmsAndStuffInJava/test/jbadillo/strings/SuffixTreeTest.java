@@ -9,8 +9,6 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
-
 public class SuffixTreeTest {
 
 	@Test
