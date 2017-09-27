@@ -5,6 +5,8 @@ import java.util.Arrays;
 /**
  * Calculation of minimum edition distance 
  * between two strings using dynamic programming
+ * O(n*m) in time and memory
+ * 
  * @author jbadillo
  *
  */
@@ -14,18 +16,7 @@ public class EditionDistance {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String s1 = "snowy";
-		String s2 = "sunny";
 		
-		System.out.println(editionDistance(s1,s2));
-		
-		s1 ="exponential";
-		s2 ="polynomial";
-		System.out.println(editionDistance(s1,s2));
-		
-		s1 ="hola";
-		s2 ="hello";
-		System.out.println(editionDistance(s1,s2));
 		
 	}
 
