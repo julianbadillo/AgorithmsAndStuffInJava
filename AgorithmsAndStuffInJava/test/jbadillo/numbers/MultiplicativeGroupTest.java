@@ -1,14 +1,16 @@
 package jbadillo.numbers;
 
-import static org.junit.Assert.*;
+import static java.math.BigInteger.ONE;
+import static java.math.BigInteger.valueOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
-import static java.math.BigInteger.*;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.junit.Test;
-
-import jbadillo.numbers.MultiplicativeGroup.MultiplicativeGroupException;
 
 public class MultiplicativeGroupTest {
 
@@ -80,6 +82,23 @@ public class MultiplicativeGroupTest {
 		assertEquals(valueOf(28), mg.generate(valueOf(1)));
 		assertEquals(valueOf(1), mg.generate(valueOf(70)));
 		
+	}
+	
+	
+	@Test
+	public void testMultiplicatievGroupOnlyModulo() throws MultiplicativeGroupException{
+		MultiplicativeGroup mg = new MultiplicativeGroup(valueOf(7));
+		assertEquals(valueOf(6), mg.getPhi());
+		assertTrue("Generator is " + mg.getG(), mg.getG().intValue() == 3 
+											|| mg.getG().intValue() == 5);
+		
+		mg = new MultiplicativeGroup(valueOf(62));
+		int [] primRoots = {3, 11, 13, 17, 21, 43, 53, 55};
+		assertEquals(30, mg.getPhi().intValue());
+		int g = mg.getG().intValue();
+		assertTrue("Generator is " + mg.getG(), Arrays.stream(primRoots)
+											.anyMatch(i -> i == g));
+
 	}
 	
 	@Test

@@ -7,10 +7,12 @@ import static java.math.BigInteger.valueOf;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 
 /**
@@ -118,6 +120,45 @@ public class MultiplicativeGroup {
 		// if any of the two factors g^f = 1 (mod n), pick another one
 		while(factors.stream().anyMatch(f -> this.g.modPow(f, n).equals(ONE)))
 			this.g = new BigInteger(bits, rand).mod(n);
+	}
+	
+	/**
+	 * Generates a cyclic multiplicative group from the given
+	 * Number, 
+	 * @param n
+	 * @throws MultiplicativeGroupException
+	 */
+	public MultiplicativeGroup(BigInteger n) throws MultiplicativeGroupException{
+		// validate if it's cyclic (there is a generator)
+		this.n = n;
+		Map<BigInteger, Integer> factors = factorize(this.n);
+		
+		// n must be p^k or 2*p^k
+		// P ^ k
+		if(factors.size() == 1 && !factors.containsKey(valueOf(2)))
+			;
+		// 2 * p  ^ k
+		else if(factors.size() == 2 && factors.containsKey(valueOf(2)) && factors.get(valueOf(2)) == 1)
+			;
+		else
+			throw new MultiplicativeGroupException("n must be p^k or 2*p^k to have a generator.");
+		
+		// calculate phi
+		this.phi = totientFormula(factors);
+		this.order = phi;
+		// factorize phi
+		Map<BigInteger, Integer> phiFactors = factorize(this.phi);
+		// phi/pi for all prime factors of phi
+		List<BigInteger> phiDivs = phiFactors.keySet().stream()
+				.map(f -> phi.divide(f))
+				.collect(Collectors.toList());
+		// find a random generator
+		this.g = new BigInteger(n.bitCount(), rand).mod(n);
+		// if not relative prime or 
+		// any of the divisors g^div = 1 (mod n), pick another one
+		while(!this.g.gcd(this.n).equals(ONE) ||
+				phiDivs.stream().anyMatch(d -> this.g.modPow(d, n).equals(ONE)))
+			this.g = new BigInteger(n.bitCount(), rand).mod(n);
 	}
 	
 	/**
@@ -264,11 +305,13 @@ public class MultiplicativeGroup {
 		return phi;
 	}
 	
-	public static class MultiplicativeGroupException extends Exception{
-		private static final long serialVersionUID = 1L;
+}
 
-		public MultiplicativeGroupException(String msg) {
-			super(msg);
-		}
+class MultiplicativeGroupException extends Exception{
+	private static final long serialVersionUID = 1L;
+
+	public MultiplicativeGroupException(String msg) {
+		super(msg);
 	}
 }
+
