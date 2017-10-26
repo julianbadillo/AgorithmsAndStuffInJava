@@ -1,5 +1,7 @@
 package jbadillo.algebra;
 
+import java.util.Arrays;
+
 /**
  * An implementation of a extension binary Galois Field GF(2^m) as described in
  * https://ntrs.nasa.gov/search.jsp?R=19900019023
@@ -38,26 +40,34 @@ public class GaloisField {
 	int m;
 	int bitFlag;
 	
+	public static final int PRE_CALCULATE_THRESHOLD = 1024;
+	public static final int POLY_DEGREE_THRESHOLD = 24;
+	
 	public GaloisField(int m, int Fx){
 		this.m = m;
+		if(m > POLY_DEGREE_THRESHOLD)
+			throw new GaloisFieldException("Polynomial degree larger than "+POLY_DEGREE_THRESHOLD+" is not supported");
+		
 		this.Fx = Fx;
 		this.n = (1 << m) - 1;
-		// TODO exception if Fx has more than m bits
-		// TODO exception if m > 31
-		generateElements();
+		
+		if(n < PRE_CALCULATE_THRESHOLD)		
+			generateElements();
 	}
 	/**
 	 * alpha[i] = alpha^i, the value (binary representation of the polynomial)
 	 */
 	private int [] alpha;
+	
 	/**
 	 * exp[alpha ^ i] = i, logarithm of the value (given the binary representation, tells you the exponent)
+	 * only preloaded if not using much memory
 	 */
 	private int [] exp;
 	
 	private void generateElements(){
-		// generation one by one
-		// TODO should be this done? or arithmetic on the fly
+		
+		// if below threshold, all elements can be pre-calculated and stored on memory
 		this.alpha = new int[n + 1];
 		this.exp = new int[n + 1];
 		this.alpha[0] = 0b1; // alpha ^ 0 = 1
@@ -66,6 +76,7 @@ public class GaloisField {
 		this.exp[0b10] = 1;
 		
 		bitFlag = 0b11111111111111111111111111111111 << this.m;
+		
 		// generate the other elements
 		for (int i = 2; i < alpha.length - 1; i++){
 			// a^i = a * a^(i-1) = X * alpha^(i-1) mod Fx
@@ -89,53 +100,51 @@ public class GaloisField {
 	 * @return alpha ^ (exp mod n)
 	 */
 	public int alphaTo(int exp){
-		return this.alpha[exp % n];
-	}
-	
-	/**
-	 * Same as alphaTo but generating bitwise
-	 *  = O(bits^2) complexity, more efficient if modulo
-	 *  is more efficient
-	 * @param exp
-	 * @return alpha ^ (exp mod n)
-	 */
-	public int generate(int exp){
 		exp %= n;
+		if(exp < 0)
+			exp += n;
+		// if preloaded
+		if(alpha != null)
+			return this.alpha[exp];
 		// X^exp mod Fx
+		// O(bits^2) complexity
 		return mod(0b1 << exp);
 	}
+	
 	/**
-	 * Add to elements of the field
-	 * @param pol1: binary representation of the polynomial
-	 * @param pol2: binary representation of the polynomial
-	 * @return the binary representation of the addition
+	 * Add two elements of the field
+	 * @param pol1
+	 * @param pol2
+	 * @return pol1 + pol2
 	 */
 	public int add(int pol1, int pol2){
+		// polynomial addition = xor the coefficients one by one
+		int r = pol1 ^ pol2;
 		// modulo FX
-		pol1 = mod(pol1);
-		pol2 = mod(pol2);
-		
-		// polynomial addition = xor the coeficients one by one
-		int r = pol1 ^ pol2; 
-		return r;
+		return mod(r);
 	}
 	
+	/**
+	 * Multiplies two elements of the field
+	 * @param pol1
+	 * @param pol2
+	 * @return pol1 * pol2
+	 */
 	public int prod(int pol1, int pol2){
+		if(pol1 == 0 || pol2 == 0)
+			return 0;
 		// modulo FX
 		pol1 = mod(pol1);
 		pol2 = mod(pol2);
 		
-		// look for the exp
-		int i1 = exp[pol1], i2 = exp[pol2];
-		// alpha^i1 + alpha^i2 = alpha^(i1+i2)s
-		return alpha[(i1 + i2)%n];
-	}
-	
-	public int bitProd(int pol1, int pol2){
-		// modulo FX
-		pol1 = mod(pol1);
-		pol2 = mod(pol2);
-		// do the bit product O(bits^2)
+		// if pre-loaded we look at exponents
+		if(alpha != null){
+			int i1 = exp[pol1], i2 = exp[pol2];
+			// alpha^i1 + alpha^i2 = alpha^(i1+i2)s
+			return alpha[(i1 + i2)%n];
+		}
+		// if not, do bitwise multiplication
+		// O(bits^2)
 		int prod = 0;
 		while(pol2 != 0)
 		{
@@ -149,14 +158,80 @@ public class GaloisField {
 	}
 	
 	/**
-	 * Calculates residue of dividing
-	 * pol in Fx
+	 * Exponentiantes
+	 * @param base
+	 * @param exp
+	 * @return base ^ exp (mod fx)
+	 */
+	public int pow(int base, int exp){
+		base = mod(base);
+		if(base == 0)
+			return 0;
+		exp %= n;
+		if(exp < 0)
+			exp += n;
+		// one
+		if(exp == 0)
+			return alphaTo(0);
+		
+		// if pre-loaded
+		if(alpha != null){
+			// get exponent
+			int exp1 = this.exp[base];
+			// alpha ^ exp + exp1
+			return alpha[(exp * exp1) % n];
+		}
+		// TODO can be calculated on the fly?
+		throw new GaloisFieldException("Not implemented");
+	}
+	
+	
+	/**
+	 * Multiplicative inverse of an element
+	 * @param pol
+	 * @return multiplicative inverse (pol') st. pol * pol' = alpha^0 = 1
+	 */
+	public int inv(int pol){
+		// modulo
+		pol = mod(pol);
+		if(pol == 0)
+			throw new GaloisFieldException("Divided by zero.");
+		
+		// if pre-loaded, get exponent and find -exp (mod n)
+		if(alpha != null){
+			int i = (n - exp[pol]) % n;
+			return alpha[i];
+		}
+		// TODO can be calculated on the fly?
+		throw new GaloisFieldException("Not implemented");
+	}
+	
+	/**
+	 * Divides two elements
+	 * @param pol1
+	 * @param pol2
+	 * @return pol1 / pol2 = pol1 * pol2' (pol2' being the multiplicative inverse of pol2)
+	 */
+	public int div(int pol1, int pol2){
+		if(pol2 == 0)
+			throw new GaloisFieldException("Divided by zero.");
+		// modulo FX
+		pol1 = mod(pol1);
+		pol2 = mod(pol2);
+		
+		return prod(pol1, inv(pol2));
+	}
+	
+	
+	/**
+	 * Calculates residue of dividing pol in Fx (the lowest representation
+	 * of an element). i.e. Converts any polynomial of degree equal or higher
+	 * than m into a degree lower than m.
 	 * @param pol binary representation
-	 * @return
+	 * @return pol mod Fx
 	 */
 	public int mod(int pol){
 		// while order >= m
-		// if this is efficient, can generate any element / power on the fly
 		int order = order(pol);
 		int mod = Fx << (order - m);
 		// O(bits^2) = can be reduced to O(bits)
@@ -187,5 +262,150 @@ public class GaloisField {
 				maxm = m;
 		return maxm;
 	}
+	
+	/**
+	 * Add two polynomials of GF terms in array representation— 
+	 * Px = P0 + P1 * x + P2*x^2 ... (lowest order first)
+	 * All Pi's are elements of the field.
+	 * @param px1
+	 * @param px2
+	 * @return a resulting polynomial
+	 */
+	public int[] add(int[] px1, int[] px2){
+		int[] res = new int[Math.max(px1.length, px2.length)];
+		// add power to power
+		for (int i = 0; i < px1.length; i++)
+			res[i] = px1[i];
+		for (int i = 0; i < px2.length; i++)
+			res[i] = add(res[i],px2[i]);
+		return res;
+	}
+	
+	/**
+	 * Multiplies two polynomials of GF terms in array representation— 
+	 * Px = P0 + P1 * x + P2*x^2 ... (lowest order first)
+	 * All Pi's are elements of the field.* @param pol1
+	 * @param px2
+	 * @return a resulting polynomial
+	 */
+	public int[] prod(int[] px1, int[] px2){
+		// polynomial multiplication
+		// order of result = order 1 + order 2
+		int res[] = new int[px1.length + px2.length - 1];
+		
+		for (int i = 0; i < px1.length; i++) 
+			for (int j = 0; j < px2.length; j++) 
+				// res[i + j] += pol1[i] * pol2[j]
+				res[i+j] = add(res[i+j], prod(px1[i], px2[j]));
+		return res;
+	}
+	
+	
+	/**
+	 * Calculates division residue of two polynomials of GF terms in array representation— 
+	 * Px = P0 + P1 * x + P2*x^2 ... (lowest order first)
+	 * All Pi's are elements of the field. 
+	 * @param px
+	 * @param dx
+	 * @return a resulting polynomial
+	 */
+	int[] mod(int[] px, int [] dx){
+		int [] rx = Arrays.copyOf(px, px.length);
+		int n = order(dx);
+		int m;
+		// break when order of pol < order of div
+		while((m = order(rx)) >= n){
+			// get the highest order element of pol and divide between highest order element of div
+			int d = div(rx[m], dx[n]);
+			// multiply gx to equal the highest order element
+			// yx = d * X^(m - n)* div = has order m
+			int[] yx = prodXToN(dx, d, m - n);
+
+			// add to cancel out
+			rx = add(rx, yx);
+		}
+		
+		// trim to highest order
+		rx = Arrays.copyOf(rx, m + 1);
+		return rx;
+	}
+	
+	/**
+	 * Calculates division of two polynomials of GF terms in array representation— 
+	 * Px = P0 + P1 * x + P2*x^2 ... (lowest order first)
+	 * All Pi's are elements of the field. 
+	 * @param px
+	 * @param dx
+	 * @return a resulting polynomial
+	 */
+	protected int[] div(int[] px, int [] dx){
+		int [] rx = Arrays.copyOf(px, px.length);
+		int quot[] = new int[rx.length];
+		int n = order(dx);
+		int m;
+		// break when order of pol < order of div
+		while((m = order(rx)) >= n){
+			// get the highest order element of pol and divide between highest order element of div
+			quot[m - n] = div(rx[m], dx[n]);
+			// multiply gx to equal the highest order element
+			// yx = d * X^(m - n)* div = has order m
+			int[] yx = prodXToN(dx, quot[m - n], m - n);
+
+			// add to cancel out
+			rx = add(rx, yx);
+		}
+		
+		// trim to highest order
+		quot = Arrays.copyOf(quot, order(quot) + 1);
+		return quot;
+	}
+	
+	/**
+	 * Multiplies a polynomial by a single term:
+	 * meaning it shifts all elements to a higher order (right)
+	 * and multiplies by the coefficient
+	 * Px = P0 + P1 * x + P2*x^2 ... (lowest order first)
+	 * All Pi's are elements of the field.
+	 * @param px Px
+	 * @param coef
+	 * @param exp
+	 * @return coef*X^exp*Px
+	 */
+	public int[] prodXToN(int[] px, int coef, int exp){
+		int[] yx = new int[px.length + exp];
+		for (int i = 0; i < px.length; i++)
+			yx[exp + i] = prod(coef, px[i]);
+		return yx;
+	}
+	
+	/**
+	 * Evaluates the polynomial on the given value on the 
+	 * Field
+	 * @param px
+	 * @param value belongs to the field
+	 * @return px[0]*value^0 + px[1]*value^1 ... 
+	 */
+	public int eval(int [] px, int value){
+		int r = 0;
+		for (int i = 0; i < px.length; i++)
+			r = add(r, prod(px[i], pow(value, i)));
+		return r;
+	}
+	
+	public static int order(int Px[]){
+		// the last non-zero position
+		int m = Px.length - 1;
+		while(Px[m] == 0 && m > 0) m--;
+		return m;
+	}
+	
+
 }
 
+
+class GaloisFieldException extends RuntimeException{
+	private static final long serialVersionUID = 1L;
+	public GaloisFieldException(String msg) {
+		super(msg);
+	}
+}

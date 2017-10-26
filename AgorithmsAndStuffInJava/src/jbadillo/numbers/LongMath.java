@@ -37,8 +37,17 @@ public class LongMath {
 		return new EuclidAlgorithm(a, b).gcd;
 	}
 	
+	/**
+	 * Module inverse. Assumes a,m relative primes
+	 * @param a
+	 * @param m
+	 * @return a', s.t. a * a' = 1 (mod m)
+	 */
 	public static long modInv(long a, long m){
-		return new EuclidAlgorithm(a, m).s_old;
+		// if a,m relative primes, gcd(a, m) = 1
+		// a*s + m*t = gcd(a, m) = 1 can be solved using
+		// euclid algorithm.
+		return new EuclidAlgorithm(a, m).s;
 	}
 
 }
@@ -52,14 +61,17 @@ public class LongMath {
 class EuclidAlgorithm{
 	long a;
 	long b;
-	long s, s_old;// where mod inverse is
-	long r, r_old;// where the GCD is
-	long t, t_old;
-	long q;
+	// where mod inverse is
+	long s;
+	// where the GCD is
+	long r;
+	long t;
 	long gcd;
+	
 	/***
-	 * Solves the equation
-	 * a*s + b*t = gcd(a,b)
+	 * Solves the equation 
+	 * a*s + b*t = gcd(a,b) = r
+	 * 
 	 * @param a
 	 * @param b
 	 */
@@ -71,22 +83,24 @@ class EuclidAlgorithm{
 	
 	
 	private void run(){
-		s_old = 1;
+		long s_old = 1;
 		s = 0;
 		
-		r_old = a;
+		long r_old = a;
 		r = b;
 		
-		t_old = 0;
+		long t_old = 0;
 		t = 1;
 		
-		long temp;
-		while(r != 0){
+		long temp, q;
+		while(r!= 0 && r_old % r != 0){
 			q = r_old / r;
 			temp = r;
+			// r = r_old mod r 
 			r = r_old - q*r;
 			r_old = temp;
 			
+			// substract same quotient to s and t
 			temp = s;
 			s = s_old - q*s;
 			s_old = temp;
@@ -95,6 +109,6 @@ class EuclidAlgorithm{
 			t = t_old - q*t;
 			t_old = temp;
 		}
-		gcd = r_old;
+		gcd = r;
 	}
 }
