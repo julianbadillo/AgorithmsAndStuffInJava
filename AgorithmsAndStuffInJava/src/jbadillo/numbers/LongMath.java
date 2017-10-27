@@ -93,10 +93,14 @@ class EuclidAlgorithm{
 		t = 1;
 		
 		long temp, q;
+		// while r doesn't divide r_old
 		while(r!= 0 && r_old % r != 0){
+			// eq i-1: a*s_old + b*t_old = r_old
+			// eq i  : a*s     + b*t     = r
+			// eq i+1 : (eq i-1) - q*(eq i)
 			q = r_old / r;
+			// r = r_old mod r
 			temp = r;
-			// r = r_old mod r 
 			r = r_old - q*r;
 			r_old = temp;
 			

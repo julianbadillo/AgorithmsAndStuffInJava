@@ -96,6 +96,7 @@ public class GaloisField {
 	}
 	
 	/**
+	 * O(bits) if not preloaded
 	 * @param exp
 	 * @return alpha ^ (exp mod n)
 	 */
@@ -112,7 +113,8 @@ public class GaloisField {
 	}
 	
 	/**
-	 * Add two elements of the field
+	 * Add two elements of the field, 
+	 * O(bits)
 	 * @param pol1
 	 * @param pol2
 	 * @return pol1 + pol2
@@ -126,6 +128,7 @@ public class GaloisField {
 	
 	/**
 	 * Multiplies two elements of the field
+	 * O(bits^2) if not preloaded
 	 * @param pol1
 	 * @param pol2
 	 * @return pol1 * pol2
@@ -158,7 +161,7 @@ public class GaloisField {
 	}
 	
 	/**
-	 * Exponentiantes
+	 * Exponentiates
 	 * @param base
 	 * @param exp
 	 * @return base ^ exp (mod fx)
@@ -333,7 +336,7 @@ public class GaloisField {
 	/**
 	 * Calculates division of two polynomials of GF terms in array representation— 
 	 * Px = P0 + P1 * x + P2*x^2 ... (lowest order first)
-	 * All Pi's are elements of the field. 
+	 * All Pi's are elements of the field. O(n*m) worst case 
 	 * @param px
 	 * @param dx
 	 * @return a resulting polynomial
@@ -365,7 +368,8 @@ public class GaloisField {
 	 * meaning it shifts all elements to a higher order (right)
 	 * and multiplies by the coefficient
 	 * Px = P0 + P1 * x + P2*x^2 ... (lowest order first)
-	 * All Pi's are elements of the field.
+	 * All Pi's are elements of the field. O(n*m) worst case
+	 * O(px.lenght + exp)
 	 * @param px Px
 	 * @param coef
 	 * @param exp
