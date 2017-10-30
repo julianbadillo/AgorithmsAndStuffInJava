@@ -21,6 +21,9 @@ public class RSCode {
 	 */
 	private int k;
 	
+	private int errorsFound;
+	
+	private int[] errorLocations;
 	
 	public RSCode(GaloisField gf, int k) {
 		this.gf = gf;
@@ -30,25 +33,47 @@ public class RSCode {
 		setGeneratorPolynomial();
 	}
 	
-	/**
-	 * Generator polynomial, n - k + 1 order
-	 */
 	private int[] gx;
-	
+	/**
+	 * @return Generator polynomial, n - k + 1 order
+	 */
 	public int[] getGx() {
 		return gx;
 	}
 	
+	/**
+	 * @return max errors corrected
+	 */
 	public int getT() {
 		return t;
 	}
 	
+	/**
+	 * @return block size
+	 */
 	public int getN() {
 		return n;
 	}
 	
+	/**
+	 * @return message size
+	 */
 	public int getK() {
 		return k;
+	}
+	
+	/**
+	 * @return location of errors found
+	 */
+	public int[] getErrorLocations() {
+		return errorLocations;
+	}
+	
+	/**
+	 * @return number of errors found
+	 */
+	public int getErrorsFound() {
+		return errorsFound;
 	}
 	
 	private void setGeneratorPolynomial(){
@@ -60,6 +85,11 @@ public class RSCode {
 			gx = gf.prod(gx, new int[]{gf.alphaTo(i), 0b1});
 	}
 	
+	/**
+	 * Generates a codeword Mx + Ck
+	 * @param Mx - k-length message of symbols in GF
+	 * @return A codeword n-length
+	 */
 	public int[] encode(int[] Mx){
 		if(Mx.length > k)
 			throw new RSCodeException("Mx should be equal or lower than " + k);
@@ -80,7 +110,12 @@ public class RSCode {
 	}
 	
 	
-	
+	/**
+	 * Extracts the message from the codeword, correcting
+	 * errors if found
+	 * @param Rx - an n-length codeword
+	 * @return The k-length message.
+	 */
 	public int[] decode(int[] Rx){
 		
 		// calculate syndromes- components
@@ -88,7 +123,9 @@ public class RSCode {
 		for (int i = 0; i < Sx.length; i++) 
 			Sx[i] = gf.eval(Rx, gf.alphaTo(i+1));
 		
-		// TODO if all syndromes are zero, skip ahead
+		// if all syndromes are zero, return the value (last k positions)
+		if(Arrays.stream(Sx).allMatch(i -> i == 0))
+			return Arrays.copyOfRange(Rx, n - k, n);
 		
 		// Sx as a polynomial
 
@@ -109,7 +146,7 @@ public class RSCode {
 		
 		// stop when degree of r(x) <= t
 		// O(n^2*log n) worst case
-		while (GaloisField.order(r) > t) {
+		while (GaloisField.order(r) >= t) {
 			q = gf.div(r_old, r);
 			temp = r;
 			// r = r_old - q*r = r_old mod r
@@ -122,47 +159,53 @@ public class RSCode {
 			o_old = temp;
 		}
 		
+		// actual # of errors detected
+		int T = o.length -1;
+		
 		// reciprocal polynomial
-		int [] or = new int[o.length];
-		for (int i = 0; i < o.length; i++)
-			or[i] = o[o.length-i-1];
+		int [] or = new int[T + 1];
+		for (int i = 0; i <= T; i++)
+			or[i] = o[T - i];
 		
 		// roots of or
-		int [] zi = new int[or.length-1];
-		int [] xi = new int[or.length-1];
+		int [] z = new int[T];
+		int [] x = new int[T];
 		// evaluate or(alpha^i) on all field elements 
-		for (int i = 0, j = 0; i < this.n && j < zi.length; i++)
+		for (int i = 0, j = 0; i < this.n && j < T; i++)
 			if(gf.eval(or, gf.alphaTo(i)) == 0){
 				// keep value and location
-				zi[j] = gf.alphaTo(i);
-				xi[j] = i;
+				z[j] = gf.alphaTo(i);
+				x[j] = i;
 				j++;
 			}
-		
-		// now get the values
-		int [] yi = new int[zi.length];
-		for (int i = 0; i < xi.length; i++) {
-			int num = gf.eval(r, gf.inv(zi[i]));
-			int den = 1;
-			// all roots of or, different than i
-			for (int j = 0; j < yi.length; j++)
-				if(j != i)
-					den = gf.prod(den, gf.add(zi[i], zi[j]));
-			yi[i] = gf.div(num, den);
+
+		// solve the linear system
+		// Si = SUM(Yj * Zj^i, for j in [1,T]), for i in [1, T] 
+		int[][] A = new int[T][T+1];
+		for (int i = 0; i < T; i++){
+			for (int j = 0; j < T; j++) 
+				// yj * Zj^i 
+				A[i][j] = gf.pow(z[j], i+1);
+			A[i][T] = Sx[i];
 		}
+		int[] y = solve(A);
 		
 		// noise estimate
 		int [] Ex = new int[n];
-		for (int i = 0; i < yi.length; i++)
-			Ex[xi[i]] = yi[i];
+		for (int i = 0; i < T; i++)
+			Ex[x[i]] = y[i];
 		
 		// closest code-word
 		int[] Cx = gf.add(Rx, Ex);
 		// extract data
 		int[] Mx = Arrays.copyOfRange(Cx, n - k, n);
+		this.errorsFound = T;
+		this.errorLocations = x;
 		return Mx;
 	}
 	
+	
+
 	/**
 	 * Computes polynomial, modulo gx
 	 * @param Px polynomial with coefficients in GF in array representation 
@@ -173,6 +216,58 @@ public class RSCode {
 		return gf.mod(Px, this.gx);
 	}
 	
+	/**
+	 * Solve linear system
+	 * @param M
+	 * @return
+	 */
+	protected int[] solve(int[][] M) {
+		// elimination
+		int rows = M.length;
+		int cols = M.length + 1;
+		for (int i = 0; i < rows; i++) {
+			// divide all row by M[i,i] 
+			int a = M[i][i];
+			// pick any other row that has no zero on col i
+			if(a == 0){
+				int k;
+				for (k = 0; k < rows && M[k][i] != 0; k++);
+				if(k == rows)
+					throw new RSCodeException("Non solvable system");
+				
+				// add it to row i
+				for (int j = i; j < cols; j++)
+					M[i][j] = gf.add(M[i][j], M[k][j]);
+				a = M[i][i];
+			}
+			
+			for (int j = i; j < cols; j++)
+				M[i][j] = gf.div(M[i][j], a);
+				
+			
+			// eliminate values on other rows of column i
+			for (int k = 0; k < rows; k++) 
+				if(i != k){
+					int b = M[k][i];
+					// add to row k, b times row i
+					for (int j = i; j < cols; j++)
+						M[k][j] = gf.add(M[k][j], gf.prod(b, M[i][j]));						
+				}
+		}
+		
+		// verify identity
+		for (int i = 0; i < rows; i++) 
+			for (int j = 0; j < rows; j++)
+				if((i == j) && (M[i][j] != 1) ||
+						(i != j) && (M[i][j] != 0))
+					throw new RSCodeException("Non identity - not solvable system (" + i + "," + j + ")" + M[i][j]);
+		
+		// copy solution
+		int[] x = new int[rows];
+		for (int i = 0; i < rows; i++)
+			x[i] = M[i][cols-1];
+		return x;
+	}
 }
 
 class RSCodeException extends RuntimeException{

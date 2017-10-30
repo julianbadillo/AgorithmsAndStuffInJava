@@ -184,8 +184,15 @@ public class GaloisField {
 			// alpha ^ exp + exp1
 			return alpha[(exp * exp1) % n];
 		}
-		// TODO can be calculated on the fly?
-		throw new GaloisFieldException("Not implemented");
+		// exponentiation by squaring
+		int res = 1;
+		while(exp > 0){
+			// last bit equals zero
+			if(exp % 2 == 1)
+				res = prod(res, base);
+			base = prod(base, base);
+		}
+		return res;
 	}
 	
 	

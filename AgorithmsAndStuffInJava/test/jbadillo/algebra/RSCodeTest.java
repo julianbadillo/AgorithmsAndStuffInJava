@@ -1,6 +1,9 @@
 package jbadillo.algebra;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
+import java.util.Random;
 
 import org.junit.Test;
 
@@ -59,7 +62,7 @@ public class RSCodeTest {
 
 	
 	@Test
-	public void testRSCodeGF16DecodeOx() {
+	public void testRSCodeGF16Decode() {
 		// A GF(16) with Fx = X^4 + X + 1
 		GaloisField gf16 = new GaloisField(4, 0b10011);
 		// n = 15, t = 6
@@ -75,6 +78,107 @@ public class RSCodeTest {
 
 		// expected result: alpha^11 * X (order 1)
 		int[] Mxt = new int[] {0, gf16.alphaTo(11), 0, 0, 0, 0, 0, 0, 0};
+		assertArrayEquals(Mxt, Mx);
+	}
+	
+	@Test
+	public void testRSCodeGF16Decode0Error() {
+		Random rand = new Random(System.currentTimeMillis());
+		// A GF(16) with Fx = X^4 + X + 1
+		GaloisField gf16 = new GaloisField(4, 0b10011);
+		// n = 15, t = 6
+		RSCode rsc16 = new RSCode(gf16, 9);
+
+		// build random message
+		int[] Mx = new int[rsc16.getK()];
+		for (int i = 0; i < Mx.length; i++) 
+			Mx[i] = rand.nextInt(gf16.n);
+		
+		// Encode
+		int[] Cx = rsc16.encode(Mx);
+		
+		// Decode and correct
+		int[] Mxt = rsc16.decode(Cx);
+		// validate is equal
+		assertArrayEquals(Mxt, Mx);
+	}
+	
+	@Test
+	public void testRSCodeGF16Decode1Error() {
+		Random rand = new Random(System.currentTimeMillis());
+		// A GF(16) with Fx = X^4 + X + 1
+		GaloisField gf16 = new GaloisField(4, 0b10011);
+		// n = 15, t = 6
+		RSCode rsc16 = new RSCode(gf16, 9);
+
+		// build random message
+		int[] Mx = new int[rsc16.getK()];
+		for (int i = 0; i < Mx.length; i++) 
+			Mx[i] = rand.nextInt(gf16.n);
+		
+		// Encode
+		int[] Cx = rsc16.encode(Mx);
+		
+		// add a random error
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
+		
+		// Decode and correct
+		int[] Mxt = rsc16.decode(Cx);
+		// validate is equal
+		assertArrayEquals(Mxt, Mx);
+	}
+	
+	@Test
+	public void testRSCodeGF16Decode2Errors() {
+		Random rand = new Random(System.currentTimeMillis());
+		// A GF(16) with Fx = X^4 + X + 1
+		GaloisField gf16 = new GaloisField(4, 0b10011);
+		// n = 15, t = 6
+		RSCode rsc16 = new RSCode(gf16, 9);
+
+		// build random message
+		int[] Mx = new int[rsc16.getK()];
+		for (int i = 0; i < Mx.length; i++) 
+			Mx[i] = rand.nextInt(gf16.n);
+		
+		// Encode
+		int[] Cx = rsc16.encode(Mx);
+		
+		// add a random error
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
+		
+		
+		// Decode and correct
+		int[] Mxt = rsc16.decode(Cx);
+		// validate is equal
+		assertArrayEquals(Mxt, Mx);
+	}
+	
+	@Test
+	public void testRSCodeGF16Decode3Errors() {
+		Random rand = new Random(System.currentTimeMillis());
+		// A GF(16) with Fx = X^4 + X + 1
+		GaloisField gf16 = new GaloisField(4, 0b10011);
+		// n = 15, t = 6
+		RSCode rsc16 = new RSCode(gf16, 9);
+
+		// build random message
+		int[] Mx = new int[rsc16.getK()];
+		for (int i = 0; i < Mx.length; i++) 
+			Mx[i] = rand.nextInt(gf16.n);
+		
+		// Encode
+		int[] Cx = rsc16.encode(Mx);
+		
+		// add a random error
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
+		
+		// Decode and correct
+		int[] Mxt = rsc16.decode(Cx);
+		// validate is equal
 		assertArrayEquals(Mxt, Mx);
 	}
 	
