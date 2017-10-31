@@ -92,7 +92,7 @@ public class RSCodeTest {
 		// build random message
 		int[] Mx = new int[rsc16.getK()];
 		for (int i = 0; i < Mx.length; i++) 
-			Mx[i] = rand.nextInt(gf16.n);
+			Mx[i] = rand.nextInt(gf16.getN());
 		
 		// Encode
 		int[] Cx = rsc16.encode(Mx);
@@ -114,13 +114,13 @@ public class RSCodeTest {
 		// build random message
 		int[] Mx = new int[rsc16.getK()];
 		for (int i = 0; i < Mx.length; i++) 
-			Mx[i] = rand.nextInt(gf16.n);
+			Mx[i] = rand.nextInt(gf16.getN());
 		
 		// Encode
 		int[] Cx = rsc16.encode(Mx);
 		
 		// add a random error
-		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.getN());
 		
 		// Decode and correct
 		int[] Mxt = rsc16.decode(Cx);
@@ -139,14 +139,14 @@ public class RSCodeTest {
 		// build random message
 		int[] Mx = new int[rsc16.getK()];
 		for (int i = 0; i < Mx.length; i++) 
-			Mx[i] = rand.nextInt(gf16.n);
+			Mx[i] = rand.nextInt(gf16.getN());
 		
 		// Encode
 		int[] Cx = rsc16.encode(Mx);
 		
 		// add a random error
-		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
-		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.getN());
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.getN());
 		
 		
 		// Decode and correct
@@ -166,15 +166,15 @@ public class RSCodeTest {
 		// build random message
 		int[] Mx = new int[rsc16.getK()];
 		for (int i = 0; i < Mx.length; i++) 
-			Mx[i] = rand.nextInt(gf16.n);
+			Mx[i] = rand.nextInt(gf16.getN());
 		
 		// Encode
 		int[] Cx = rsc16.encode(Mx);
 		
 		// add a random error
-		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
-		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
-		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.n);
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.getN());
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.getN());
+		Cx[rand.nextInt(Cx.length)] = rand.nextInt(gf16.getN());
 		
 		// Decode and correct
 		int[] Mxt = rsc16.decode(Cx);

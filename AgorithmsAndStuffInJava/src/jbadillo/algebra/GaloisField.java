@@ -17,7 +17,7 @@ public class GaloisField {
 	/*
 	 * n = 2^m - 1
 	 */
-	int n;
+	private int n;
 	
 	/*
 	 * The primitive polynomial. F(x) such that:
@@ -31,14 +31,14 @@ public class GaloisField {
 	 * of the polynomial.
 	 * Fx = in*2^n + ... + i1 *2 + i0 * 1
 	 */
-	int Fx;
+	private int Fx;
 	
 	/*
 	 * Order of the primitive polynomial.
 	 * The Field has 2^m elements
 	 */
-	int m;
-	int bitFlag;
+	private int m;
+	private int bitFlag;
 	
 	public static final int PRE_CALCULATE_THRESHOLD = 1024;
 	public static final int POLY_DEGREE_THRESHOLD = 24;
@@ -51,8 +51,9 @@ public class GaloisField {
 		this.Fx = Fx;
 		this.n = (1 << m) - 1;
 		
+		/*
 		if(n < PRE_CALCULATE_THRESHOLD)		
-			generateElements();
+			generateElements();//*/
 	}
 	/**
 	 * alpha[i] = alpha^i, the value (binary representation of the polynomial)
@@ -88,9 +89,18 @@ public class GaloisField {
 		}
 	}
 	
+	/**
+	 * 2^m - 1
+	 * @return
+	 */
 	public int getN() {
 		return n;
 	}
+	
+	/**
+	 * 
+	 * @return
+	 */
 	public int getM() {
 		return m;
 	}
@@ -109,7 +119,17 @@ public class GaloisField {
 			return this.alpha[exp];
 		// X^exp mod Fx
 		// O(bits^2) complexity
-		return mod(0b1 << exp);
+		if(exp <= POLY_DEGREE_THRESHOLD)
+			return mod(1 << exp);
+		
+		// break exponent in parts
+		// X ^ exp = X ^ T(exp / T) * X^(exp % T) mod FX
+		int e1 = mod(1 << POLY_DEGREE_THRESHOLD);
+		int e2 = mod(1 << (exp % POLY_DEGREE_THRESHOLD));
+		int r = e2;
+		for (int i = 0; i < exp / POLY_DEGREE_THRESHOLD; i++) 
+			r = prod(r, e1);
+		return r;	
 	}
 	
 	/**
@@ -191,6 +211,7 @@ public class GaloisField {
 			if(exp % 2 == 1)
 				res = prod(res, base);
 			base = prod(base, base);
+			exp >>= 1;
 		}
 		return res;
 	}
@@ -212,8 +233,10 @@ public class GaloisField {
 			int i = (n - exp[pol]) % n;
 			return alpha[i];
 		}
-		// TODO can be calculated on the fly?
-		throw new GaloisFieldException("Not implemented");
+		
+		// calculate on the fly
+		// pol ^ -1 = pol ^ (n - 1) mod Fx
+		return pow(pol, n - 1);
 	}
 	
 	/**
@@ -232,7 +255,6 @@ public class GaloisField {
 		return prod(pol1, inv(pol2));
 	}
 	
-	
 	/**
 	 * Calculates residue of dividing pol in Fx (the lowest representation
 	 * of an element). i.e. Converts any polynomial of degree equal or higher
@@ -243,15 +265,15 @@ public class GaloisField {
 	public int mod(int pol){
 		// while order >= m
 		int order = order(pol);
-		int mod = Fx << (order - m);
+		int subs = Fx << (order - m);
 		// O(bits^2) = can be reduced to O(bits)
 		while(order >= m){
 			// substract Fx*X^(order-m) from polynomial 
 			// thus eliminating the highest order term
-			pol ^= mod;
+			pol ^= subs;
 			// recalculate order
 			order = order(pol);
-			mod = Fx << (order - m);	
+			subs = Fx << (order - m);	
 		}
 		return pol;
 	}
