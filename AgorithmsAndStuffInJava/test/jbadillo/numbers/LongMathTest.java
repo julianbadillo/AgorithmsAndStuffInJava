@@ -10,6 +10,37 @@ import org.junit.Test;
 public class LongMathTest {
 
 	@Test
+	public void testModProd(){
+		// test less than 16 bit
+		Random rand = new Random(System.currentTimeMillis());
+		long mod = PrimeNumbers._16BIT_PRIMES[0];
+		for (int i = 0; i < 1000; i++) {
+			long a = rand.nextInt(1 << 17); // 16 bit
+			long b = rand.nextInt(1 << 17); // 16 bit
+			assertEquals(a * b % mod, modProd(a, b, mod));
+		}
+		
+		// overflowing integers
+		for (int i = 0; i < 1000; i++) {
+			long a = rand.nextLong() % 0x10000000l; // 28 bit
+			a = a < 0? -a: a;
+			long b = rand.nextLong() % 0x10000000l; // 28 bit
+			b = b < 0? -b: b;
+			assertEquals(a * b % mod, modProd(a, b, mod));
+		}
+		
+		// close to overflow long
+		// 32 bit x 32 bit but elimination at the beginning (small modulo)
+		assertEquals(0l, modProd(0xFAFCABC1l, 0xFAFCABC2l, 2l));
+		// 32 bit x 32 bit with 32 bit modulo
+		assertEquals(0x8145E059l, modProd(0xFAFCABC1l, 0xFAFCABC1l, 0xFFFFFFFFl));
+		// 60 bit x 60 bit with 32 bit modulo
+		assertEquals(0x7B4EF92Dl, modProd(0x1234567890ABCDEFl, 0x87654321ABCDEFl, 0xFFFFFFFFl));
+		// 60 bit x 60 bit with 60 bit modulo
+		assertEquals(298165650705736920l, modProd(0x1234567890ABCDEFl, 0x87654321ABCDEFl, 0xFFFFFFFFFFFFFFFl));
+	}
+	
+	@Test
 	public void testModPow(){
 		
 		assertEquals(2, modPow(2, 1, 10000));
@@ -25,13 +56,14 @@ public class LongMathTest {
 		assertEquals(27, modPow(3, 3, 10000));
 		assertEquals(81, modPow(3, 4, 10000));
 		assertEquals(243, modPow(3, 5, 10000));
-		assertEquals(729, modPow(3, 6, 10000));
-
+		assertEquals(729, modPow(3, 6, 10000));		
 	}
 
+	
+	
 	@Test
 	public void testModPowBig(){
-		int bits = 31;
+		int bits = 62;
 		BigInteger a = new BigInteger(bits, new Random());
 		BigInteger e = new BigInteger(bits, new Random());
 		BigInteger m = new BigInteger(bits, new Random());

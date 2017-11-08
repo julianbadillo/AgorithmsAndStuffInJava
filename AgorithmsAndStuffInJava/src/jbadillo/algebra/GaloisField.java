@@ -41,7 +41,7 @@ public class GaloisField {
 	private int bitFlag;
 	
 	public static final int PRE_CALCULATE_THRESHOLD = 1024;
-	public static final int POLY_DEGREE_THRESHOLD = 24;
+	public static final int POLY_DEGREE_THRESHOLD = 30;
 	
 	public GaloisField(int m, int Fx){
 		this.m = m;
@@ -51,7 +51,7 @@ public class GaloisField {
 		this.Fx = Fx;
 		this.n = (1 << m) - 1;
 		
-		/*
+		///*
 		if(n < PRE_CALCULATE_THRESHOLD)		
 			generateElements();//*/
 	}
@@ -122,7 +122,7 @@ public class GaloisField {
 		if(exp <= POLY_DEGREE_THRESHOLD)
 			return mod(1 << exp);
 		
-		// break exponent in parts
+		// break exponent in parts to avoid overflowing
 		// X ^ exp = X ^ T(exp / T) * X^(exp % T) mod FX
 		int e1 = mod(1 << POLY_DEGREE_THRESHOLD);
 		int e2 = mod(1 << (exp % POLY_DEGREE_THRESHOLD));
@@ -174,8 +174,10 @@ public class GaloisField {
 			// last bit is 1
 			if((pol2 & 1) != 0)
 				prod ^= pol1;
+			// pol1 = 2*pol1 mod Fx (to avoid overflowing)
+			pol1 = mod(pol1<<1);
+			// pol2 = pol2 / 2
 			pol2 >>= 1;
-			pol1 <<= 1;
 		}
 		return mod(prod);
 	}
@@ -419,10 +421,21 @@ public class GaloisField {
 	 * @return px[0]*value^0 + px[1]*value^1 ... 
 	 */
 	public int eval(int [] px, int value){
+		/*
 		int r = 0;
 		for (int i = 0; i < px.length; i++)
 			r = add(r, prod(px[i], pow(value, i)));
+		return r; //*/
+		// decomposing polynomial as
+		// ax^3 + bx^2 + c + d =  x(x(ax + b) + c) + d
+		///*
+		int r = px[px.length-1];
+		for (int i = px.length-2; i >= 0; i--)
+			//r = r*x + p[i]
+			r = add(prod(r, value), px[i]);
+		
 		return r;
+		//*/
 	}
 	
 	public static int order(int Px[]){
@@ -432,7 +445,6 @@ public class GaloisField {
 		return m;
 	}
 	
-
 }
 
 

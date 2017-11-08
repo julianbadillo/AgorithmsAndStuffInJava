@@ -1,8 +1,9 @@
 package jbadillo.algebra;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -50,7 +51,6 @@ public class GaloisFieldTest {
 		gf64.alphaTo(56);
 		for (int i = 0; i < gf64.getN(); i++) {
 			int element = gf64.alphaTo(i);
-			System.out.println(i + ": " + element);
 			assertFalse("Element produced twice: " + element, set.contains(element));
 			set.add(gf64.alphaTo(i));
 		}
