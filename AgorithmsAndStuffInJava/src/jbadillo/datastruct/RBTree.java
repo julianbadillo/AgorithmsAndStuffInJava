@@ -14,7 +14,7 @@ public class RBTree<K extends Comparable<K>, V> {
 
 	private int size = 0;
 	
-	private Node root;
+	private TreeNode root;
 	
 	public RBTree() {
 		
@@ -34,15 +34,15 @@ public class RBTree<K extends Comparable<K>, V> {
 		size++;
 		// first node
 		if (root == null)
-			root = new Node(key, val);
+			root = new TreeNode(key, val);
 		 else
 			_put(key, val);
 	}
 	
 	private void _put(K key, V val){
 		// search if existing - not allow duplicates
-		Node node = root, parent = null;
-		LinkedList<Node> path = new LinkedList<>();
+		TreeNode node = root, parent = null;
+		LinkedList<TreeNode> path = new LinkedList<>();
 		
 		int dir = 0;
 		while(node != null){
@@ -61,7 +61,7 @@ public class RBTree<K extends Comparable<K>, V> {
 				node = node.right;
 		}
 		// not found - add a new node - red link
-		node = new Node(key, val);
+		node = new TreeNode(key, val);
 		node.red = true;
 		if(dir < 0)
 			parent.left = node;
@@ -72,11 +72,11 @@ public class RBTree<K extends Comparable<K>, V> {
 		rebalance(path);
 	}
 		
-	private void rebalance(LinkedList<Node> path){
-		Node node = path.isEmpty() ? null : path.removeLast();
-		Node parent = path.isEmpty() ? null : path.removeLast();
-		Node grandpa = path.isEmpty() ? null : path.removeLast();
-		Node greatg = path.isEmpty() ? null : path.removeLast();
+	private void rebalance(LinkedList<TreeNode> path){
+		TreeNode node = path.isEmpty() ? null : path.removeLast();
+		TreeNode parent = path.isEmpty() ? null : path.removeLast();
+		TreeNode grandpa = path.isEmpty() ? null : path.removeLast();
+		TreeNode greatg = path.isEmpty() ? null : path.removeLast();
 		
 		while (node != null && node != root && node.red) {
 			// double red link
@@ -155,9 +155,9 @@ public class RBTree<K extends Comparable<K>, V> {
 		}
 	}
 	
-	private Node rotateLeft(Node parent, Node node){
+	private TreeNode rotateLeft(TreeNode parent, TreeNode node){
 		// Right Node becomes Up Node
-		Node up = node.right;
+		TreeNode up = node.right;
 		// keep old left son to right
 		node.right = up.left;
 		// UP Node becomes Left
@@ -175,9 +175,9 @@ public class RBTree<K extends Comparable<K>, V> {
 		return up;
 	}	
 	
-	private Node rotateRight(Node parent, Node node){
+	private TreeNode rotateRight(TreeNode parent, TreeNode node){
 		// Left node becomes up
-		Node up = node.left;
+		TreeNode up = node.left;
 		// keep old right son to left
 		node.left = up.right;
 		// up node becomse right
@@ -200,7 +200,7 @@ public class RBTree<K extends Comparable<K>, V> {
 	 * @return true if key in the stuff
 	 */
 	public boolean containsKey(K key){
-		Node node = get(root, key);
+		TreeNode node = get(root, key);
 		return node != null;
 	}
 	
@@ -209,11 +209,11 @@ public class RBTree<K extends Comparable<K>, V> {
 	 * @return Value under key
 	 */
 	public V get(K key){
-		Node node = get(root, key);
+		TreeNode node = get(root, key);
 		return node == null ? null : node.val;
 	}
 	
-	private Node get(Node node, K key){
+	private TreeNode get(TreeNode node, K key){
 		// iterative
 		while(node != null){
 			if(node.key.equals(key))
@@ -227,13 +227,13 @@ public class RBTree<K extends Comparable<K>, V> {
 		return null;
 	}
 	
-	private class Node {
+	private class TreeNode {
 		K key;
 		V val;
 		boolean red;
-		Node left;
-		Node right;
-		public Node(K key, V val) {
+		TreeNode left;
+		TreeNode right;
+		public TreeNode(K key, V val) {
 			this.key = key;
 			this.val = val;
 		}
@@ -255,7 +255,7 @@ public class RBTree<K extends Comparable<K>, V> {
 		return bf.toString();
 	}
 
-	private void printTree(Node node, StringBuilder bf){
+	private void printTree(TreeNode node, StringBuilder bf){
 		// empty
 		if(node == null)
 			return;
@@ -284,26 +284,33 @@ public class RBTree<K extends Comparable<K>, V> {
 		return bf.toString();
 	}
 	
-	private void toString(Node node, StringBuilder bf){
-		// empty
-		if(node == null)
-			return;
-		// leaf
-		if(node.left == null && node.right == null){
-			bf.append(node.toString());
+	private void toString(TreeNode node, StringBuilder bf){
+		LinkedList<TravNode> stack = new LinkedList<>();
+		stack.push(new TravNode(node));
+		// iterative - using stack
+		while(!stack.isEmpty()){
+			TravNode tn = stack.pop();
+			if (tn.visited) {
+				bf.append(tn.node.toString());
+				if(!stack.isEmpty())
+					bf.append(", ");
+			} else {
+				// left on top
+				if (tn.node.right != null)
+					stack.push(new TravNode(tn.node.right));
+				tn.visited = true;
+				stack.push(tn);
+				if (tn.node.left != null)
+					stack.push(new TravNode(tn.node.left));
+			}
 		}
-		// non leaf
-		else{
-			if(node.left != null){
-				toString(node.left, bf);
-				bf.append(", ");	
-			}
-			bf.append(node.toString());
-			if(node.right != null)
-			{
-				bf.append(", ");
-				toString(node.right, bf);
-			}
+	}
+	
+	private class TravNode{
+		TreeNode node;
+		boolean visited = false;
+		public TravNode(TreeNode node) {
+			this.node = node;
 		}
 	}
 }
