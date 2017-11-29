@@ -188,7 +188,7 @@ public class RSCode {
 				A[i][j] = gf.pow(z[j], i+1);
 			A[i][T] = Sx[i];
 		}
-		int[] y = solve(A);
+		int[] y = gf.solve(A);
 		
 		// noise estimate
 		int [] Ex = new int[n];
@@ -216,58 +216,6 @@ public class RSCode {
 		return gf.mod(Px, this.gx);
 	}
 	
-	/**
-	 * Solve linear system
-	 * @param M
-	 * @return
-	 */
-	protected int[] solve(int[][] M) {
-		// elimination
-		int rows = M.length;
-		int cols = M.length + 1;
-		for (int i = 0; i < rows; i++) {
-			// divide all row by M[i,i] 
-			int a = M[i][i];
-			// pick any other row that has no zero on col i
-			if(a == 0){
-				int k;
-				for (k = 0; k < rows && M[k][i] != 0; k++);
-				if(k == rows)
-					throw new RSCodeException("Non solvable system");
-				
-				// add it to row i
-				for (int j = i; j < cols; j++)
-					M[i][j] = gf.add(M[i][j], M[k][j]);
-				a = M[i][i];
-			}
-			
-			for (int j = i; j < cols; j++)
-				M[i][j] = gf.div(M[i][j], a);
-				
-			
-			// eliminate values on other rows of column i
-			for (int k = 0; k < rows; k++) 
-				if(i != k){
-					int b = M[k][i];
-					// add to row k, b times row i
-					for (int j = i; j < cols; j++)
-						M[k][j] = gf.add(M[k][j], gf.prod(b, M[i][j]));						
-				}
-		}
-		
-		// verify identity
-		for (int i = 0; i < rows; i++) 
-			for (int j = 0; j < rows; j++)
-				if((i == j) && (M[i][j] != 1) ||
-						(i != j) && (M[i][j] != 0))
-					throw new RSCodeException("Non identity - not solvable system (" + i + "," + j + ")" + M[i][j]);
-		
-		// copy solution
-		int[] x = new int[rows];
-		for (int i = 0; i < rows; i++)
-			x[i] = M[i][cols-1];
-		return x;
-	}
 }
 
 class RSCodeException extends RuntimeException{

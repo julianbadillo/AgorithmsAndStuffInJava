@@ -278,6 +278,32 @@ public class GaloisFieldTest {
 		assertEquals(gf16.alphaTo(10), gf16.eval(P, gf16.alphaTo(6)));
 
 	}
+	
+	@Test
+	public void testGF64Eval() {
+		
+		// GF(2^6) = GF(64), Fx = X^6 + X + 1
+		GaloisField gf64 = new GaloisField(6, 0b1000011);
+
+		// Px = 1 (constant value)
+		int[] P = new int[] { gf64.alphaTo(0) };
+		assertEquals(1, gf64.eval(P, gf64.alphaTo(1)));
+		assertEquals(1, gf64.eval(P, gf64.alphaTo(2)));
+
+		// Px = X (identity)
+		P = new int[] { 0, gf64.alphaTo(0) };
+		for (int i = 0; i < gf64.getN(); i++)
+			assertEquals(gf64.alphaTo(i), gf64.eval(P, gf64.alphaTo(i)));
+
+		// 0.8, 11.7, 8.5, 10.4, 4.3, 3.2, 8.1, 12.0
+		// = 1* X^8 + alpha^11 * X^7 + alpha^8 * X^5 + ...
+		// a big 1000000 terms polynomial
+		// just to check performance test
+		P = new int[1000000];
+		for (int i = 0; i < P.length; i++)
+			P[i] = gf64.alphaTo(i);
+		gf64.eval(P, gf64.alphaTo(10));
+	}
 
 	@Test
 	public void testGF16PolynomialMod() {
@@ -378,6 +404,50 @@ public class GaloisFieldTest {
 		assertEquals(GaloisField.order(px), GaloisField.order(p2x));
 		for (int i = 0; i < m; i++)
 			assertEquals(px[i], p2x[i]);
+	}
+	
+	@Test
+	public void testGF16Interpolate() {
+		// Test all in one
+		// A GF(16) with Fx = X^4 + X + 1
+		GaloisField gf16 = new GaloisField(4, 0b10011);
+		// n = 15, t = 6
+		Random rand = new Random(System.currentTimeMillis());
+
+		// random polynomial
+		int px[] = IntStream.range(0, 15).map(i -> rand.nextInt(gf16.getN())).toArray();
+		// points
+		int [][]points = new int[px.length][2];
+		for (int i = 0; i < points.length; i++) {
+			points[i][0] = gf16.alphaTo(i);
+			points[i][1] = gf16.eval(px, points[i][0]);
+		}
+
+		int[] px2 = gf16.interpolate(points);
+
+		assertArrayEquals(px, px2);
+	}
+	
+	@Test
+	public void testGF64Interpolate() {
+		// Test all in one
+		// GF(2^6) = GF(64), Fx = X^6 + X + 1
+		GaloisField gf64 = new GaloisField(6, 0b1000011);
+		// n = 15, t = 6
+		Random rand = new Random(System.currentTimeMillis());
+
+		// random polynomial
+		int px[] = IntStream.range(0, 63).map(i -> rand.nextInt(gf64.getN())).toArray();
+		// points
+		int [][]points = new int[px.length][2];
+		for (int i = 0; i < points.length; i++) {
+			points[i][0] = gf64.alphaTo(i);
+			points[i][1] = gf64.eval(px, points[i][0]);
+		}
+
+		int[] px2 = gf64.interpolate(points);
+
+		assertArrayEquals(px, px2);
 	}
 
 	@Test

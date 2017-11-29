@@ -306,12 +306,13 @@ public class GaloisField {
 	 * @return a resulting polynomial
 	 */
 	public int[] add(int[] px1, int[] px2){
-		int[] res = new int[Math.max(px1.length, px2.length)];
-		// add power to power
+		int size = Math.min(n, Math.max(px1.length, px2.length));
+		int[] res = new int[size];
+		// add terms of the same power - if i = j (mod n), then X^i = X^j 
 		for (int i = 0; i < px1.length; i++)
-			res[i] = px1[i];
+			res[i % n] = px1[i];
 		for (int i = 0; i < px2.length; i++)
-			res[i] = add(res[i],px2[i]);
+			res[i % n] = add(res[i % n], px2[i]);
 		return res;
 	}
 	
@@ -325,12 +326,14 @@ public class GaloisField {
 	public int[] prod(int[] px1, int[] px2){
 		// polynomial multiplication
 		// order of result = order 1 + order 2
-		int res[] = new int[px1.length + px2.length - 1];
+		int size = Math.min(n, px1.length + px2.length - 1);
+		int res[] = new int[size];
 		
 		for (int i = 0; i < px1.length; i++) 
 			for (int j = 0; j < px2.length; j++) 
+				// add terms of the same power - if i = j (mod n), then X^i = X^j 
 				// res[i + j] += pol1[i] * pol2[j]
-				res[i+j] = add(res[i+j], prod(px1[i], px2[j]));
+				res[(i + j) % n] = add(res[(i + j) % n], prod(px1[i], px2[j]));
 		return res;
 	}
 	
@@ -343,7 +346,7 @@ public class GaloisField {
 	 * @param dx
 	 * @return a resulting polynomial
 	 */
-	int[] mod(int[] px, int [] dx){
+	public int[] mod(int[] px, int [] dx){
 		int [] rx = Arrays.copyOf(px, px.length);
 		int n = order(dx);
 		int m;
@@ -407,9 +410,10 @@ public class GaloisField {
 	 * @return coef*X^exp*Px
 	 */
 	public int[] prodXToN(int[] px, int coef, int exp){
-		int[] yx = new int[px.length + exp];
+		int size = Math.min(n, px.length + exp);
+		int[] yx = new int[size];
 		for (int i = 0; i < px.length; i++)
-			yx[exp + i] = prod(coef, px[i]);
+			yx[(exp + i) % n] = add(yx[(exp + i) % n], prod(coef, px[i]));
 		return yx;
 	}
 	
@@ -445,6 +449,86 @@ public class GaloisField {
 		return m;
 	}
 	
+	/**
+	 * Interpolates the minimum degree polynomial
+	 * that contains all given points in the field
+	 * @param points a two column matrix with  x,y coordinates of points
+	 * @return the polynomial
+	 */
+	public int[] interpolate(int points[][]){
+		// split x and y
+		int n = points.length;
+		int[] x = new int[n];
+		int[] y = new int[n];
+		for (int i = 0; i < n; i++) {
+			x[i] = points[i][0];
+			y[i] = points[i][1];
+		}
+		// set the linear system
+		int[][] M = new int[n][n + 1];
+		for (int i = 0; i < n; i++) {
+			for (int j = 0, pow = alphaTo(0); j < n; j++, pow = prod(pow, x[i])) 
+				M[i][j] = pow;
+			M[i][n] = y[i];
+		}
+		
+		return solve(M);
+	}
+	
+	/**
+	 * Solve linear system on , using Gauss-Jordan
+	 * reduction O(N^3)
+	 * A * xT = b
+	 * @param M = A | b coefficients and results matrix
+	 * @return x
+	 */
+	protected int[] solve(int[][] M) {
+		// elimination
+		int rows = M.length;
+		int cols = M.length + 1;
+		for (int i = 0; i < rows; i++) {
+			// divide all row by M[i,i] 
+			int a = M[i][i];
+			if(a == 0){
+				// pick any other row that has no zero on col i
+				int k;
+				for (k = 0; k < rows && M[k][i] != 0; k++);
+				if(k == rows)
+					throw new GaloisFieldException("Non solvable system");
+				
+				// add it to row i
+				for (int j = i; j < cols; j++)
+					M[i][j] = add(M[i][j], M[k][j]);
+				a = M[i][i];
+			}
+			
+			for (int j = i; j < cols; j++)
+				M[i][j] = div(M[i][j], a);
+				
+			// eliminate values on other rows of column i
+			for (int k = 0; k < rows; k++) 
+				if(i != k){
+					int b = M[k][i];
+					// add to row k, b times row i
+					for (int j = i; j < cols; j++)
+						M[k][j] = add(M[k][j], prod(b, M[i][j]));						
+				}
+		}
+		
+		// verify identity
+		for (int i = 0; i < rows; i++) 
+			for (int j = 0; j < rows; j++)
+				if((i == j) && (M[i][j] != 1) ||
+						(i != j) && (M[i][j] != 0))
+					throw new GaloisFieldException("Non identity - not solvable system (" + i + "," + j + ")" + M[i][j]);
+		
+		// copy solution
+		int[] x = new int[rows];
+		for (int i = 0; i < rows; i++)
+			x[i] = M[i][cols-1];
+		return x;
+	}
+	
 }
 
 
@@ -454,3 +538,4 @@ class GaloisFieldException extends RuntimeException{
 		super(msg);
 	}
 }
+

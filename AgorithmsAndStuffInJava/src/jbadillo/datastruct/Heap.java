@@ -1,5 +1,6 @@
 package jbadillo.datastruct;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * Simple implementation of a heap/priority queue using an array tree.
@@ -10,36 +11,44 @@ import java.util.ArrayList;
  * @author jbadillo
  *
  */
-public class Heap {
+public class Heap<T extends Comparable<T>> {
 
-	private ArrayList<Integer> heap = new ArrayList<>();
+	private ArrayList<T> heap = new ArrayList<>();
+	private Comparator<? super T> comp;
+	
+	public Heap(){
+		// default comparator
+		this((o1, o2) -> ((Comparable<T>)o1).compareTo(o2));
+	}
+	
+	public Heap(Comparator<? super T> comp){
+		this.comp = comp;
+	}
 	
 	/**
 	 * Adds a new value, keeping the minimum at the head
 	 * @param x
 	 */
-	void push(int x){
+	public void push(T x){
 		// add at the end
 		heap.add(x);
 		// rebalance
-		int chil = heap.size()-1;
-		//2n + 1 , 2n + 2
-		int prev = (chil-1) / 2;
-		while(chil > 0 && heap.get(prev) > heap.get(chil)){
-			// swap
-			int t = heap.get(prev);
-			heap.set(prev, heap.get(chil));
-			heap.set(chil, t);
-			chil = prev;
-			prev = (chil-1)/2;
+		int child = heap.size()-1, parent = (child - 1)/2;
+		
+		// a[parent] > x
+		while(child > 0 && comp.compare(heap.get(parent), x) > 0){
+			// move parent to child, and move x to child
+			heap.set(child, heap.get(parent));
+			heap.set(parent, x);
+			child = parent;
+			parent = (child - 1) / 2;
 		}
-
 	}
 	
 	/**
 	 * @return the min value, doesn't modify the heap
 	 */
-	int peekMin(){
+	public T peekMin(){
 		return heap.get(0);
 	}
 	
@@ -47,31 +56,31 @@ public class Heap {
 	 * 
 	 * @return the min value, and removes it from the heap.
 	 */
-	int pop(){
+	public T pop(){
 		if(heap.size() == 1)
 			return heap.remove(0);
-		int m = heap.get(0);
+		T m = heap.get(0);
 		
 		// add last element to the root
-		heap.set(0, heap.remove(heap.size()-1));
+		T x = heap.remove(heap.size()-1);
 		
 		// rebalance
-		int prev = 0;
-		int child = 2*prev + 1;
+		int parent = 0;
+		int child = 2 * parent + 1;
 		while(child < heap.size()){
-			if(child < heap.size()-1 && heap.get(child) > heap.get(child + 1))
+			// min of two children a[child] > a[child + 1]
+			if(child < heap.size() - 1 && comp.compare(heap.get(child), heap.get(child + 1)) > 0)
 				child++;
-			if(heap.get(prev) < heap.get(child))
+			// x < a[child] this is the correct place to keep it balanced
+			if(comp.compare(x, heap.get(child)) < 0)
 				break;
-			// swap with the smallest child
-			int t = heap.get(prev);
-			heap.set(prev, heap.get(child));
-			heap.set(child, t);
+			// move the smallest child up
+			heap.set(parent, heap.get(child));
 			
-			prev = child;
-			child = 2*prev + 1;
+			parent = child;
+			child = 2*parent + 1;
 		}
-		
+		heap.set(parent, x);
 		return m;
 	}
 
