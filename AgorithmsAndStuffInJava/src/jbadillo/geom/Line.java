@@ -1,4 +1,9 @@
 package jbadillo.geom;
+import static java.lang.Math.min;
+import static java.lang.Math.max;
+import static java.lang.Math.abs;
+import static java.lang.Math.atan2;
+import static jbadillo.geom.Constants.EPSILON;
 
 /**
  * A line segment between two points
@@ -35,7 +40,7 @@ public class Line {
 		this.p2 = new Point(x2, y2);
 		this.dx = p2.x - p1.x;
 		this.dy = p2.y - p1.y;
-		this.angle = Math.atan2(dy, dx);
+		this.angle = atan2(dy, dx);
 		// x-intersect
 		a = dy != 0? (p1.x*p2.y - p2.x*p1.y) / dy: Double.NaN;
 		// y-intersect
@@ -81,12 +86,11 @@ public class Line {
 		// colinear
 		if(!colinear(p))
 			return false;
-		// outside bounds
-		if(p.x < Math.min(p1.x, p2.x) || Math.max(p1.x, p2.x) < p.x)
-			return false;
-		if(p.y < Math.min(p1.y, p2.y) || Math.max(p1.y, p2.y) < p.y)
-			return false;
-		return true;
+		// inside of bounds (within precision)
+		if(min(p1.x, p2.x) - EPSILON <= p.x && p.x <= max(p1.x, p2.x) + EPSILON
+				&& min(p1.y, p2.y) - EPSILON <= p.y && p.y <= max(p1.y, p2.y) + EPSILON)
+			return true;
+		return false;
 	}
 	
 	/**
@@ -98,11 +102,11 @@ public class Line {
 		double dx2 = p1.x - p.x, dy2 = p1.y - p.y;
 		
 		// m1 = (dy/dx) = m2 = (dy2 / dx2)
-		return dy * dx2 == dy2 * dx;
+		return abs(dy * dx2 - dy2 * dx) < EPSILON;
 	}
 	
 	public boolean isParallel(Line l){
-		return this.dy * l.dx == l.dy * this.dx;
+		return abs(this.dy * l.dx - l.dy * this.dx) < EPSILON;
 	}
 	
 	/**
@@ -146,7 +150,10 @@ public class Line {
 			p.y = dy / dx * p.x + b;
 		}
 		// if inside both line segments
-		if(contains(p) && l.contains(p))
+		if (min(p1.x, p2.x) - EPSILON <= p.x && p.x <= max(p1.x, p2.x) + EPSILON 
+				&& min(p1.y, p2.y) - EPSILON <= p.y && p.y <= max(p1.y, p2.y) + EPSILON
+				&& min(l.p1.x, l.p2.x) - EPSILON <= p.x && p.x <= max(l.p1.x, l.p2.x) + EPSILON
+				&& min(l.p1.y, l.p2.y) - EPSILON <= p.y && p.y <= max(l.p1.y, l.p2.y) + EPSILON)
 			return p;
 		return null;
 	}

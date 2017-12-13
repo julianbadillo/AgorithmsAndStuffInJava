@@ -4,7 +4,9 @@ import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.util.Arrays.stream;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
 
 public class Polygon {
 		
@@ -44,6 +46,8 @@ public class Polygon {
 	}
 	
 	/***
+	 * A polygon is convex if all point pairs inside the polygon can be connected
+	 * by a line that remains inside the polygon.
 	 * @return true if all angles are convex, polygon is equal to its convex hull
 	 */
 	public boolean isConvex(){
@@ -154,5 +158,50 @@ public class Polygon {
 		}
 		return area;
 	}
+	
+	/**
+	 * Calculates the convex hull of a given set of points
+	 * @param points
+	 * @return A polygon made with the convex hull
+	 */
+	public static Polygon convexHull(Point...points){
+		LinkedList<Point> list = new LinkedList<>();
+		// sort them desc y and asc x
+		// first one will be the top-left most
+		Arrays.sort(points, (p1, p2) -> {
+			if (p1.y < p2.y)
+				return 1;
+			if (p1.y > p2.y)
+				return -1;
+			if (p1.x > p2.x)
+				return 1;
+			return -1;
+		});
+		
+		
+		Point start = points[0], point = start, next;
+		double prevangle = -2*PI, minangle = -PI;
+		
+		do{
+			list.add(point);
+			prevangle = minangle;
+			minangle = PI;	
+			next = null;
+			// minimum angle to point
+			for (int i = 0; i < points.length; i++) {
+				if(point.equals(points[i]))
+					continue;
+				Line l = new Line(point, points[i]);
+				if(prevangle < l.getAngle() && l.getAngle() < minangle){
+					next = points[i];
+					minangle = l.getAngle();
+				}
+			}
+			point = next;
+		}while(point != null && !point.equals(start));
+		
+		return new Polygon(list);
+	}
+	
 	
 }

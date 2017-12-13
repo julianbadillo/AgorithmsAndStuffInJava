@@ -1,4 +1,6 @@
 package jbadillo.geom;
+import static java.lang.Math.abs;
+import static jbadillo.geom.Constants.EPSILON;
 
 public class Point {
 	double x, y;
@@ -8,17 +10,14 @@ public class Point {
 		this.y = y;
 	}
 	
-	
 	public boolean equals(Object obj) {
 		if(!(obj instanceof Point))
 			return false;
+		// check reference
+		if(this == obj)
+			return true;
 		Point p = (Point)obj;
-		return this.x == p.x && this.y == p.y;
-	}
-	
-	public boolean aproxEquals(Object obj) {
-		Point p = (Point)obj;
-		return Math.abs(this.x - p.x) < Constants.EPSILON && Math.abs(this.y - p.y) < Constants.EPSILON;
+		return abs(this.x - p.x) < EPSILON && abs(this.y - p.y) < EPSILON;
 	}
 	
 	public String toString() {
