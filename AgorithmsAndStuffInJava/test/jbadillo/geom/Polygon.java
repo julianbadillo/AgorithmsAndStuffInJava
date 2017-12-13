@@ -1,6 +1,7 @@
 package jbadillo.geom;
 
 import static java.lang.Math.PI;
+import static java.lang.Math.abs;
 import static java.util.Arrays.stream;
 
 import java.util.Collection;
@@ -38,16 +39,14 @@ public class Polygon {
 		for (int i = 0; i < sides.length; i++){
 			innerAngles[i] = sides[i].getAngle() - sides[(i + 1) % sides.length].getAngle();
 			// normalize from -PI to PI
-			if(innerAngles[i] < -PI){
+			if(innerAngles[i] < -PI)
 				innerAngles[i] += 2*PI;
-			}
-			else if(innerAngles[i] > PI){
+			else if(innerAngles[i] > PI)
 				innerAngles[i] -= 2*PI;
-			}
 		}
+		
 		boolean allPositive = stream(innerAngles).allMatch(a -> a > 0);
 		boolean allNegative = stream(innerAngles).allMatch(a -> a < 0);
-		
 		return allPositive || allNegative;
 	}
 	
@@ -112,27 +111,32 @@ public class Polygon {
 	public double getArea(){
 		if(points.length < 3)
 			return 0.0;
-		return Math.abs(getArea(this.points));		
+		return abs(getArea(this.points));		
 	}
 	
-	
+	/**
+	 * Keeps the area sign (negative if clockwise, positive if otherwise)
+	 * @param points
+	 * @return
+	 */
 	private double getArea(Point... points)
 	{
+		double area = 0.0;
 		// easy case, triangles
 		if(points.length == 3){
-			// envolving rectangle
-			double maxx = stream(points).mapToDouble(p -> p.x).max().getAsDouble(),
-				minx = stream(points).mapToDouble(p -> p.x).min().getAsDouble(),
-				maxy = stream(points).mapToDouble(p -> p.y).max().getAsDouble(),
-				miny = stream(points).mapToDouble(p -> p.y).min().getAsDouble();
-			double area = (maxx - minx) * (maxy - miny);
-			// substract external triangles
-			for (Line s: sides)
-				area -= Math.abs(s.dx*s.dy / 2.0);
-			return area;
+			double v1x = points[1].x - points[0].x,
+					v1y = points[1].y - points[0].y,
+					v2x = points[2].x - points[1].x,
+					v2y = points[2].y - points[1].y;
+			// cross product of first two sides
+			area = (v1x * v2y - v1y * v2x) / 2.0;
 		}
-		
-		return 0.0;
+		else{
+			// triangulate from first point to every other consecutive point pair
+			for (int i = 1; i < points.length - 1; i++)
+				area += getArea(points[0], points[i], points[i + 1]);
+		}
+		return area;
 	}
 	
 }
