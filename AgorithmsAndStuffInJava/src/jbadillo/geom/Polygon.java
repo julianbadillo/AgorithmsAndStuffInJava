@@ -8,8 +8,8 @@ import java.util.Collection;
 
 public class Polygon {
 		
-	Point[] points;
-	Line[] sides;
+	private Point[] points;
+	private Line[] sides;
 	
 	/**
 	 * Polygon is build with line segments between consecutive points
@@ -29,6 +29,19 @@ public class Polygon {
 		
 	}
 
+	public Point[] getPoints() {
+		// a copy to avoid inconsistencies
+		return stream(points)
+				.map(p -> new Point(p.x, p.y))
+				.toArray(Point[]::new);
+	}
+	
+	public Line[] getSides() {
+		// a copy to avoid inconsistencies
+		return stream(sides)
+				.map(l -> new Line(l.p1, l.p2))
+				.toArray(Line[]::new);
+	}
 	
 	/***
 	 * @return true if all angles are convex, polygon is equal to its convex hull
@@ -108,6 +121,9 @@ public class Polygon {
 		
 	}
 	
+	/**
+	 * @return Area of the polygon.
+	 */
 	public double getArea(){
 		if(points.length < 3)
 			return 0.0;

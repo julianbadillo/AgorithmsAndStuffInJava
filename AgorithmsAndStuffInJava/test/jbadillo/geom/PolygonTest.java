@@ -166,34 +166,6 @@ public class PolygonTest {
 	}
 	
 	@Test
-	public void testBuild(){
-		Polygon diamond = new Polygon(
-				new Point[] { new Point(5, 0), new Point(10, 5), new Point(5, 10), new Point(0, 5) });
-
-		Line l1 = new Line(5,0,10,5);//new Line(diamond.points[0], diamond.points[1]); //diamond.sides[0];// 
-		assertEquals(new Point(5,0), l1.p1);
-		assertEquals(new Point(10,5), l1.p2);
-		assertEquals(5.0, l1.getXIntersect(), Constants.EPSILON);
-		assertEquals(-5.0, l1.getYIntersect(), Constants.EPSILON);
-		assertEquals(1.0, l1.getDy() / l1.getDx(), Constants.EPSILON);
-
-		Point myP = new Point(5.0, 5.0);
-		Line l2 = new Line(myP, new Point(10.0, 5.0));// new Line(5,5,10,5); //
-		assertEquals(myP, l2.p1);
-		assertEquals(diamond.points[1], l2.p2);
-		assertEquals(Double.NaN, l2.getXIntersect(), Constants.EPSILON);
-		assertEquals(5.0, l2.getYIntersect(), Constants.EPSILON);
-		assertEquals(0.0, l2.getDy() / l2.getDx(), Constants.EPSILON);
-
-		assertNotNull(l2.intersection(l1));
-		assertNotNull(l1.intersection(l2));
-		
-		assertEquals(diamond.points[1], l1.intersection(l2));
-		assertEquals(diamond.points[1], l2.intersection(l1));
-
-	}
-	
-	@Test
 	public void testAreaTriangles() throws Exception {
 		
 		Polygon triangle = new Polygon(

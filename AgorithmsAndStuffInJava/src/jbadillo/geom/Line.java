@@ -6,28 +6,31 @@ package jbadillo.geom;
  *
  */
 public class Line {
-	
+	// accessible for Polygon
 	Point p1, p2;
 	double dx, dy;
 	private double angle;
 	private double b;
 	private double a;
 
+	/**
+	 * Constructor
+	 * @param p1
+	 * @param p2
+	 */
 	public Line(Point p1, Point p2) {
-		super();
-		this.p1 = p1;
-		this.p2 = p2;
-		this.dx = p2.x - p1.x;
-		this.dy = p2.y - p1.y;
-		this.angle = Math.atan2(dy, dx);
-
-		// x-intersect
-		a = dy != 0? (p1.x*p2.y - p2.x*p1.y) / dy: Double.NaN;
-		// y-intersect
-		b = dx != 0? (p2.x*p1.y - p1.x*p2.y) / dx: Double.NaN;
+		this(p1.x, p1.y, p2.x, p2.y);
 	}
 	
+	/**
+	 * Constructor
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 */
 	public Line(double x1, double y1, double x2, double y2){
+		// maintain consistency on update
 		this.p1 = new Point(x1, y1);
 		this.p2 = new Point(x2, y2);
 		this.dx = p2.x - p1.x;
